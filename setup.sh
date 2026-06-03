@@ -30,8 +30,11 @@ install_nvm() {
   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
 
   export NVM_DIR="$HOME/.nvm"
+  # nvm.sh は set -u と非互換のため一時的に解除
+  set +u
   # shellcheck source=/dev/null
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+  set -u
 
   if ! grep -q 'NVM_DIR' "$HOME/.bashrc" 2>/dev/null; then
     warn ".bashrc does not contain NVM_DIR export — adding manually."
@@ -49,9 +52,12 @@ install_nvm() {
 # ─── 2. Node.js LTS ────────────────────────────────────────────────────────────
 install_node() {
   info "Installing Node.js LTS..."
+  # nvm コマンドは set -u と非互換のため一時的に解除
+  set +u
   nvm install --lts
   nvm use --lts
   nvm alias default 'lts/*'
+  set -u
   success "node $(node -v) / npm $(npm -v) ready."
 }
 
