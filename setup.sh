@@ -15,6 +15,15 @@ require_ubuntu() {
   case "$ID" in ubuntu|debian) ;; *) die "This script targets Ubuntu/Debian (detected: $ID)." ;; esac
 }
 
+# WSL環境ではWindows側のnode/npmがPATHに混入するため除外する
+purge_windows_node_from_path() {
+  if [[ -n "${WSL_DISTRO_NAME:-}" ]]; then
+    info "WSL detected — removing Windows node paths from PATH."
+    PATH=$(echo "$PATH" | tr ':' '\n' | grep -v '/mnt/c' | tr '\n' ':' | sed 's/:$//')
+    export PATH
+  fi
+}
+
 # ─── 1. nvm ────────────────────────────────────────────────────────────────────
 install_nvm() {
   info "Installing nvm v0.39.7..."
@@ -49,8 +58,9 @@ install_node() {
 # ─── 3. Claude Code ────────────────────────────────────────────────────────────
 install_claude_code() {
   info "Installing Claude Code..."
-  curl -fsSL https://claude.ai/install.sh | sh
-  success "Claude Code installed."
+  # Use Linux npm explicitly to avoid picking up Windows claude.exe in WSL
+  npm install -g @anthropic-ai/claude-code
+  success "Claude Code installed: $(which claude)"
 }
 
 auth_claude() {
@@ -118,6 +128,7 @@ main() {
   echo -e "${CYAN}========================================${NC}"
   echo ""
 
+  purge_windows_node_from_path
   install_nvm
   install_node
   install_claude_code
