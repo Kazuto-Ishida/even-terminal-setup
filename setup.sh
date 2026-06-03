@@ -51,7 +51,17 @@ install_claude_code() {
   info "Installing Claude Code..."
   curl -fsSL https://claude.ai/install.sh | sh
   success "Claude Code installed."
-  warn "Run 'claude' to complete browser authentication on first launch."
+}
+
+auth_claude() {
+  echo ""
+  warn "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  warn "  Claude Code の認証を行います。"
+  warn "  ブラウザで表示される URL を開いてログインしてください。"
+  warn "  完了したら Ctrl+C で抜けて次のステップに進みます。"
+  warn "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo ""
+  claude || true
 }
 
 # ─── 4. Tailscale ──────────────────────────────────────────────────────────────
@@ -59,8 +69,24 @@ install_tailscale() {
   info "Installing Tailscale..."
   curl -fsSL https://tailscale.com/install.sh | sh
   success "Tailscale installed."
-  warn "Run 'sudo tailscale up' and open the printed URL to authenticate."
-  warn "After auth, run 'tailscale ip' — a 100.x.x.x address means success."
+}
+
+auth_tailscale() {
+  echo ""
+  warn "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  warn "  Tailscale の認証を行います。"
+  warn "  表示される URL をブラウザで開いてログインしてください。"
+  warn "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo ""
+  sudo tailscale up
+
+  local ip
+  ip=$(tailscale ip 2>/dev/null | head -1 || true)
+  if [[ "$ip" == 100.* ]]; then
+    success "Tailscale connected: $ip"
+  else
+    warn "Tailscale IP が取得できませんでした。後で 'tailscale ip' で確認してください。"
+  fi
 }
 
 # ─── 5. even-terminal ──────────────────────────────────────────────────────────
@@ -70,33 +96,36 @@ install_even_terminal() {
   success "even-terminal $(even-terminal --version) ready."
 }
 
+start_even_terminal() {
+  echo ""
+  warn "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  warn "  even-terminal を起動します (--tailscale モード)。"
+  warn "  iPhone の Even App から接続できます。"
+  warn "  終了するには Ctrl+C を押してください。"
+  warn "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo ""
+  even-terminal --tailscale
+}
+
 # ─── main ──────────────────────────────────────────────────────────────────────
 main() {
   require_ubuntu
 
   echo ""
   echo -e "${CYAN}========================================${NC}"
-  echo -e "${CYAN}  Ubuntu setup: nvm / Node / Claude Code${NC}"
-  echo -e "${CYAN}  Tailscale / even-terminal             ${NC}"
+  echo -e "${CYAN}  even-terminal setup                   ${NC}"
+  echo -e "${CYAN}  nvm / Node / Claude Code / Tailscale  ${NC}"
   echo -e "${CYAN}========================================${NC}"
   echo ""
 
   install_nvm
   install_node
   install_claude_code
+  auth_claude
   install_tailscale
+  auth_tailscale
   install_even_terminal
-
-  echo ""
-  echo -e "${GREEN}========================================${NC}"
-  echo -e "${GREEN}  All done!                             ${NC}"
-  echo -e "${GREEN}========================================${NC}"
-  echo ""
-  echo "Next steps:"
-  echo "  1. source ~/.bashrc          # reload shell"
-  echo "  2. claude                    # authenticate Claude Code"
-  echo "  3. sudo tailscale up         # authenticate Tailscale"
-  echo "  4. even-terminal --tailscale # start even-terminal"
+  start_even_terminal
 }
 
 main "$@"
