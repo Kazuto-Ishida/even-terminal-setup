@@ -64,8 +64,7 @@ install_node() {
 # ─── 3. Claude Code ────────────────────────────────────────────────────────────
 install_claude_code() {
   info "Installing Claude Code..."
-  # Use Linux npm explicitly to avoid picking up Windows claude.exe in WSL
-  npm install -g @anthropic-ai/claude-code
+  curl -fsSL https://claude.ai/install.sh | sh
   success "Claude Code installed: $(which claude)"
 }
 
